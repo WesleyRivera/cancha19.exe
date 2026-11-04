@@ -209,6 +209,7 @@ func build() -> void:
 	_build_walls()
 	_build_goals()
 	_build_houses()
+	_build_neighborhood_details()
 	_build_far_lights()
 	_build_lamps()
 	_build_laundry()
@@ -561,3 +562,84 @@ func _build_laundry() -> void:
 			q.material_override = cm
 			q.position = Vector3(x0 + 0.5 + i * 0.9, y - qm.size.y * 0.5, z)
 			add_child(q)
+
+
+# ---------- detalles del barrio: callejones, escaleras, cables y vegetacion ----------
+func _build_neighborhood_details() -> void:
+	var concrete := _std(Color("#555052"), 0.96)
+	var worn := _std(Color("#77706a"), 0.98)
+	var dark_metal := _std(Color("#292d32"), 0.72, 0.25)
+
+	# Calles estrechas que serpentean entre las casas del cerro.
+	for row: int in 4:
+		var z := -19.0 - row * 10.0
+		var y := 5.0 + row * 4.2
+		var road := _box(Vector3(0.0, y, z), Vector3(112.0, 0.22, 2.8), concrete)
+		road.rotation_degrees.y = -2.0 if row % 2 == 0 else 2.0
+		for side: int in [-1, 1]:
+			_box(Vector3(side * 54.0, y + 0.12, z), Vector3(1.0, 0.45, 3.2), worn)
+
+	# Escalinatas visibles entre las viviendas, sin invadir el terreno de juego.
+	for stair: int in 3:
+		var sx := -34.0 + stair * 34.0
+		var sz := -17.0 - (stair % 2) * 8.0
+		var sy := 4.5 + stair * 2.0
+		for step: int in 18:
+			var block := _box(
+				Vector3(sx + sin(float(step) * 0.16) * 1.4, sy + float(step) * 0.24, sz - float(step) * 0.72),
+				Vector3(2.8, 0.24, 0.82),
+				worn
+			)
+			block.rotation_degrees.y = sin(float(step) * 0.16) * 8.0
+		_box(Vector3(sx - 1.8, sy + 2.0, sz - 6.0), Vector3(0.18, 4.0, 14.0), dark_metal)
+
+	# Cableado aereo irregular, caracteristico de las calles del barrio.
+	var cable_points := [
+		Vector3(-48.0, 15.0, -18.0), Vector3(-20.0, 13.0, -25.0),
+		Vector3(12.0, 16.0, -20.0), Vector3(45.0, 14.0, -30.0),
+		Vector3(-42.0, 22.0, -43.0), Vector3(4.0, 24.0, -48.0),
+		Vector3(48.0, 21.0, -48.0)
+	]
+	for i: int in range(cable_points.size() - 1):
+		_cable(cable_points[i], cable_points[i + 1], dark_metal)
+		if i % 2 == 0:
+			_cable(cable_points[i], cable_points[i + 1] + Vector3(0.0, -2.2, -1.0), dark_metal)
+
+	# Palmeras y arboles en los bordes del asentamiento.
+	for tree: int in 9:
+		var tx := rng.randf_range(-58.0, 58.0)
+		var tz := rng.randf_range(-48.0, -18.0)
+		var th := rng.randf_range(4.0, 7.0)
+		var trunk := MeshInstance3D.new()
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.top_radius = 0.16
+		trunk_mesh.bottom_radius = 0.28
+		trunk_mesh.height = th
+		trunk.mesh = trunk_mesh
+		trunk.material_override = _std(Color("#49382c"), 0.95)
+		trunk.position = Vector3(tx, 3.0 + th * 0.5, tz)
+		add_child(trunk)
+		var crown := MeshInstance3D.new()
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = rng.randf_range(1.5, 2.4)
+		crown_mesh.height = crown_mesh.radius * 1.25
+		crown.mesh = crown_mesh
+		crown.material_override = _std(Color("#244b35"), 0.98)
+		crown.position = Vector3(tx, 3.0 + th, tz)
+		crown.scale = Vector3(1.35, 0.75, 1.0)
+		add_child(crown)
+
+
+func _cable(a: Vector3, b: Vector3, mat: Material) -> void:
+	var delta := b - a
+	var wire := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.025
+	mesh.bottom_radius = 0.025
+	mesh.height = delta.length()
+	wire.mesh = mesh
+	wire.material_override = mat
+	wire.position = (a + b) * 0.5
+	wire.look_at(b, Vector3.UP)
+	wire.rotate_object_local(Vector3.RIGHT, PI * 0.5)
+	add_child(wire)
