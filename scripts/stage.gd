@@ -78,19 +78,26 @@ void fragment(){
 	else {
 		float u = abs(wnrm.z) > abs(wnrm.x) ? wpos.x : wpos.z;
 		float v = wpos.y;
-		vec3 col = vec3(0.14, 0.33, 0.66) * (0.85 + 0.25 * vn(vec2(u, v) * 1.3));
-		float peel = smoothstep(0.62, 0.72, fbm(vec2(u * 0.8, v * 1.6) + 3.0));
-		col = mix(col, vec3(0.55, 0.55, 0.57), peel * 0.8);
-		col *= mix(0.55, 1.0, smoothstep(0.0, 1.2, v));
-		col = mix(col, vec3(0.8, 0.8, 0.82), step(3.05, v) * step(v, 3.3));
-		vec2 gcell = vec2(u / 2.2, v / 1.1);
+		vec2 p = vec2(u, v);
+		float noise = vn(p * 2.1);
+		vec3 concrete = vec3(0.34, 0.32, 0.30) * (0.82 + noise * 0.28);
+		vec3 faded_paint = mix(vec3(0.18, 0.30, 0.37), vec3(0.48, 0.25, 0.19), vn(p * 0.32));
+		float paint_mask = smoothstep(0.35, 0.78, fbm(p * vec2(0.42, 0.9) + 4.0));
+		vec3 col = mix(concrete, faded_paint, paint_mask * 0.78);
+		float peel = smoothstep(0.48, 0.72, fbm(p * vec2(1.3, 2.2) + 3.0));
+		col = mix(col, concrete * 1.35, peel * 0.72);
+		float damp = smoothstep(0.52, 0.78, fbm(vec2(u * 0.55, v * 0.22) + 19.0)) * (1.0 - smoothstep(0.0, 2.8, v));
+		col = mix(col, vec3(0.12, 0.16, 0.15), damp * 0.55);
+		float crack = smoothstep(0.92, 0.98, vn(p * vec2(8.0, 13.0)));
+		col = mix(col, vec3(0.12, 0.12, 0.12), crack * 0.28);
+		col = mix(col, vec3(0.75, 0.69, 0.57), step(3.05, v) * step(v, 3.3) * 0.55);
+		vec2 gcell = vec2(u / 3.4, v / 1.7);
 		vec2 gc = floor(gcell);
 		vec2 gf = fract(gcell);
-		float gm = step(0.78, h21(gc)) * step(0.4, v) * step(v, 2.9);
-		float shape = smoothstep(0.5, 0.35, length((gf - 0.5) * vec2(1.0, 1.6)));
-		vec3 gcol = vec3(h21(gc + 1.0), h21(gc + 2.0), h21(gc + 3.0));
-		gcol = mix(gcol, vec3(1.0, 0.8, 0.1), 0.3);
-		col = mix(col, gcol, gm * shape * 0.85 * (1.0 - peel * 0.5));
+		float gm = step(0.84, h21(gc)) * step(0.45, v) * step(v, 2.85);
+		float shape = smoothstep(0.5, 0.28, length((gf - 0.5) * vec2(1.0, 1.6)));
+		vec3 gcol = mix(vec3(0.86, 0.28, 0.12), vec3(0.95, 0.68, 0.18), h21(gc + 2.0));
+		col = mix(col, gcol, gm * shape * 0.62 * (1.0 - peel * 0.5));
 		ALBEDO = col;
 		ROUGHNESS = 0.9;
 	}
@@ -125,8 +132,12 @@ void fragment(){
 		brick = mix(brick, vec3(0.45, 0.38, 0.34), mortar);
 		float patch_n = vn(vec2(u, v) * 0.7 + seed * 7.0);
 		float m = smoothstep(0.42, 0.55, patch_n + ((1.0 - brick_mix) - 0.5) * 0.9);
-		vec3 plaster = base.rgb * (0.85 + 0.3 * vn(vec2(u, v) * 3.0));
-		plaster *= 1.0 - 0.25 * vn(vec2(u * 4.0, v * 0.5));
+		vec3 plaster = base.rgb * (0.78 + 0.34 * vn(vec2(u, v) * 3.0));
+		plaster *= 1.0 - 0.32 * vn(vec2(u * 4.0, v * 0.5));
+		float damp = smoothstep(0.5, 0.82, fbm(vec2(u * 0.6, v * 0.22) + seed)) * (1.0 - smoothstep(0.0, 3.2, v));
+		plaster = mix(plaster, vec3(0.16, 0.19, 0.17), damp * 0.42);
+		float chipped = smoothstep(0.72, 0.9, fbm(vec2(u * 2.0, v * 1.7) + seed * 4.0));
+		plaster = mix(plaster, brick * 0.82, chipped * 0.22);
 		vec3 col = mix(brick, plaster, m);
 		vec2 cell = vec2(2.6, 3.0);
 		vec2 cuv = vec2(u, v) / cell;
@@ -147,7 +158,7 @@ void fragment(){
 		col *= mix(0.6, 1.0, smoothstep(0.0, 3.0, v));
 		ALBEDO = col;
 		ROUGHNESS = 0.9;
-		EMISSION = glass * lit * inner * (1.0 - bar) * 1.5;
+		EMISSION = glass * lit * inner * (1.0 - bar) * 2.2;
 	}
 }
 """
@@ -209,6 +220,7 @@ func build() -> void:
 	_build_crowd_and_stands()
 	_build_street_props()
 	_build_rooftop_details()
+	_build_rooftop_antennas()
 
 
 # ---------- utilidades ----------
@@ -883,3 +895,48 @@ func _build_rooftop_details() -> void:
 				support.material_override = dark_metal
 				support.position = Vector3(x + cos(TAU * leg / 3.0) * radius * 0.7, h + 0.42, z + sin(TAU * leg / 3.0) * radius * 0.7)
 				add_child(support)
+
+
+# Antenas, platos de television y tuberias: siluetas tipicas de azoteas habitadas.
+func _build_rooftop_antennas() -> void:
+	var metal := _std(Color("#3c4145"), 0.7, 0.38)
+	var dish_mat := _std(Color("#a6a6a0"), 0.55, 0.25)
+	for idx: int in 34:
+		var x := rng.randf_range(-57.0, 57.0)
+		var z := rng.randf_range(-58.0, -17.0)
+		var y := rng.randf_range(12.0, 37.0)
+		var pole := MeshInstance3D.new()
+		var pole_mesh := CylinderMesh.new()
+		pole_mesh.top_radius = 0.025
+		pole_mesh.bottom_radius = 0.035
+		pole_mesh.height = rng.randf_range(1.1, 2.0)
+		pole.mesh = pole_mesh
+		pole.material_override = metal
+		pole.position = Vector3(x, y + 0.8, z)
+		add_child(pole)
+		for cross: int in 2:
+			_box(Vector3(x, y + 0.55 + cross * 0.42, z), Vector3(0.8 + cross * 0.45, 0.045, 0.045), metal)
+		if idx % 2 == 0:
+			var dish := MeshInstance3D.new()
+			var dish_mesh := SphereMesh.new()
+			dish_mesh.radius = 0.52
+			dish_mesh.height = 0.22
+			dish.mesh = dish_mesh
+			dish.material_override = dish_mat
+			dish.position = Vector3(x + 0.65, y + 0.65, z + 0.15)
+			dish.scale = Vector3(1.0, 0.18, 1.0)
+			add_child(dish)
+	# Tuberias verticales en fachadas y bordes de azoteas.
+	for pipe: int in 22:
+		var x := rng.randf_range(-55.0, 55.0)
+		var z := rng.randf_range(-55.0, -18.0)
+		var h := rng.randf_range(3.0, 8.0)
+		var tube := MeshInstance3D.new()
+		var tube_mesh := CylinderMesh.new()
+		tube_mesh.top_radius = 0.045
+		tube_mesh.bottom_radius = 0.045
+		tube_mesh.height = h
+		tube.mesh = tube_mesh
+		tube.material_override = metal
+		tube.position = Vector3(x, h * 0.5 + 1.0, z)
+		add_child(tube)
