@@ -222,6 +222,7 @@ func build() -> void:
 	_build_rooftop_details()
 	_build_rooftop_antennas()
 	_build_neighborhood_laundry()
+	_build_favela_foreground()
 
 
 # ---------- utilidades ----------
@@ -1040,3 +1041,71 @@ func _build_neighborhood_laundry() -> void:
 			cloth.position = Vector3(x0 + 0.25 + float(piece) * span / float(pieces), y - mesh.size.y * 0.5, z - 0.54)
 			cloth.rotation_degrees.y = rng.randf_range(-8.0, 8.0)
 			add_child(cloth)
+
+
+# Primer plano de favela: fachadas laterales, muros remendados, postes,
+# cables bajos y pequeños comercios para que el campo quede inmerso en el barrio.
+func _build_favela_foreground() -> void:
+	var concrete_colors := [Color("#8c8177"), Color("#b4a28d"), Color("#716d68"), Color("#c0b19b"), Color("#9b7865")]
+	var metal_colors := [Color("#41474a"), Color("#5a5145"), Color("#343b3e")]
+	var rusty := _std(Color("#594638"),0.82,0.28)
+	for side in [-1,1]:
+		# Volúmenes próximos al campo, con alturas y anchuras desiguales.
+		for i in 6:
+			var x := float(side) * (27.0 + float(i % 2) * 1.8)
+			var z := -10.0 + float(i) * 4.1
+			var width := rng.randf_range(3.4,5.8)
+			var height := rng.randf_range(5.0,10.5)
+			var depth := rng.randf_range(3.0,5.2)
+			var wall_mat := _std(concrete_colors[rng.randi_range(0,concrete_colors.size()-1)],0.96)
+			_box(Vector3(x,height*0.5,z),Vector3(width,height,depth),wall_mat)
+			_box(Vector3(x,height+0.12,z),Vector3(width+0.25,0.24,depth+0.25),_std(Color("#5b5955"),0.96))
+			var front := z + depth*0.5 + 0.08
+			# Ventanas oscuras con marcos, rejas y alféizares.
+			for floor_idx in maxi(1,int(height/2.8)):
+				var wy := 1.55 + floor_idx*2.65
+				if wy > height-0.6: continue
+				var wx := x + rng.randf_range(-width*0.25,width*0.25)
+				var ww := rng.randf_range(0.7,1.15)
+				_box(Vector3(wx,wy,front),Vector3(ww,0.92,0.09),_std(Color("#20252b"),0.9))
+				_box(Vector3(wx,wy,front+0.06),Vector3(ww*0.82,0.72,0.035),_glow(Color("#d99b55"),rng.randf_range(0.0,0.65)))
+				for bar in 3:
+					_box(Vector3(wx-ww*0.35+bar*ww*0.35,wy,front+0.12),Vector3(0.035,0.95,0.04),rusty)
+				_box(Vector3(wx,wy-0.52,front+0.18),Vector3(ww+0.18,0.09,0.34),_std(Color("#77716a"),0.95))
+			# Aleros, láminas y pequeños depósitos visibles desde la cancha.
+			if i%2==0:
+				_box(Vector3(x,height+0.34,z),Vector3(width*0.62,0.13,depth*0.58),_std(metal_colors[i%3],0.78,0.25))
+				var tank := MeshInstance3D.new()
+				var tm := CylinderMesh.new()
+				tm.top_radius=0.48
+				tm.bottom_radius=0.55
+				tm.height=1.25
+				tank.mesh=tm
+				tank.material_override=_std(Color("#315c75"),0.65,0.12)
+				tank.position=Vector3(x+width*0.22,height+1.12,z-depth*0.15)
+				add_child(tank)
+			# Cable vertical y bajante de agua en la fachada.
+			_box(Vector3(x+width*0.43,height*0.5,front+0.2),Vector3(0.055,height,0.055),rusty)
+	# Cableado bajo cruzando el encuadre, sin invadir el área de juego.
+	var wire_mat := _std(Color("#171b20"),0.72,0.18)
+	_cable(Vector3(-34.0,9.5,-17.0),Vector3(34.0,11.2,-19.0),wire_mat)
+	_cable(Vector3(-32.0,12.5,-23.0),Vector3(33.0,10.8,-26.0),wire_mat)
+	# Focos de cancha orientados al césped.
+	for side in [-1,1]:
+		var pole := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius=0.10
+		pm.bottom_radius=0.15
+		pm.height=9.0
+		pole.mesh=pm
+		pole.material_override=_std(Color("#33383d"),0.68,0.42)
+		pole.position=Vector3(side*22.7,7.2,-8.5)
+		add_child(pole)
+		for lamp_idx in 3:
+			var lamp := MeshInstance3D.new()
+			var lm := BoxMesh.new()
+			lm.size=Vector3(0.42,0.25,0.22)
+			lamp.mesh=lm
+			lamp.material_override=_glow(Color("#fff0c8"),2.8)
+			lamp.position=Vector3(side*22.7,10.9,-9.3+lamp_idx*0.8)
+			add_child(lamp)
