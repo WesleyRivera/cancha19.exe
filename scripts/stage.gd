@@ -11,6 +11,8 @@ const GZ := 3.0
 var rng := RandomNumberGenerator.new()
 var _house_shader: Shader
 var _wall_shader: Shader
+var _concrete_texture: Texture2D
+var _brick_texture: Texture2D
 
 
 const COMMON := """
@@ -109,6 +111,8 @@ shader_type spatial;
 uniform vec4 base : source_color = vec4(0.7, 0.3, 0.3, 1.0);
 uniform float brick_mix = 0.0;
 uniform float seed = 0.0;
+uniform sampler2D concrete_tex : source_color;
+uniform sampler2D brick_tex : source_color;
 varying vec3 wpos;
 varying vec3 wnrm;
 void vertex(){
@@ -128,11 +132,14 @@ void fragment(){
 		vec2 bf = fract(bp);
 		vec2 bid = floor(bp);
 		float mortar = clamp(step(bf.x, 0.06) + step(bf.y, 0.12), 0.0, 1.0);
-		vec3 brick = mix(vec3(0.55, 0.24, 0.15), vec3(0.72, 0.36, 0.22), h21(bid + seed));
+		vec3 brick = texture(brick_tex, vec2(u * 0.34, v * 0.34)).rgb;
+		brick *= mix(0.88, 1.12, h21(bid + seed));
 		brick = mix(brick, vec3(0.45, 0.38, 0.34), mortar);
 		float patch_n = vn(vec2(u, v) * 0.7 + seed * 7.0);
 		float m = smoothstep(0.42, 0.55, patch_n + ((1.0 - brick_mix) - 0.5) * 0.9);
-		vec3 plaster = base.rgb * (0.78 + 0.34 * vn(vec2(u, v) * 3.0));
+		vec3 plaster = texture(concrete_tex, vec2(u * 0.22, v * 0.22)).rgb;
+		plaster *= base.rgb * 1.7;
+		plaster *= (0.78 + 0.34 * vn(vec2(u, v) * 3.0));
 		plaster *= 1.0 - 0.32 * vn(vec2(u * 4.0, v * 0.5));
 		float damp = smoothstep(0.5, 0.82, fbm(vec2(u * 0.6, v * 0.22) + seed)) * (1.0 - smoothstep(0.0, 3.2, v));
 		plaster = mix(plaster, vec3(0.16, 0.19, 0.17), damp * 0.42);
@@ -204,6 +211,8 @@ const BALLISH_SKY_LIGHTS := 380
 func build() -> void:
 	rng.seed = 1919
 	var cmn := COMMON
+	_concrete_texture = load("res://assets/textures/favela_concrete.svg") as Texture2D
+	_brick_texture = load("res://assets/textures/favela_brick.svg") as Texture2D
 	_house_shader = Shader.new()
 	_house_shader.code = HOUSE_SHADER.replace("//COMMON", cmn)
 	_wall_shader = Shader.new()
@@ -492,6 +501,8 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 	var pal := [Color("#c24a8a"), Color("#e8c23a"), Color("#d8452f"), Color("#2fa39a"), Color("#e8e2d6"), Color("#7a52c8"), Color("#4aa0e0"), Color("#e88a3a")]
 	var m := ShaderMaterial.new()
 	m.shader = _house_shader
+	m.set_shader_parameter("concrete_tex", _concrete_texture)
+	m.set_shader_parameter("brick_tex", _brick_texture)
 	m.set_shader_parameter("base", pal[rng.randi() % pal.size()])
 	m.set_shader_parameter("brick_mix", 1.0 if rng.randf() < 0.55 else rng.randf_range(0.0, 0.4))
 	m.set_shader_parameter("seed", rng.randf() * 20.0)
