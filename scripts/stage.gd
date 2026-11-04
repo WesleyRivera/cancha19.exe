@@ -1103,6 +1103,24 @@ func _build_favela_foreground() -> void:
 				tank.material_override=_std(Color("#315c75"),0.65,0.12)
 				tank.position=Vector3(x+width*0.22,height+1.12,z-depth*0.15)
 				add_child(tank)
+			# Ampliaciones autoconstruidas: cuartos sobre losa, balcones y escaleras exteriores.
+			if i % 2 == 0:
+				var add_w := rng.randf_range(1.4, 2.5)
+				var add_h := rng.randf_range(1.5, 2.8)
+				var add_x := x + rng.randf_range(-width * 0.25, width * 0.25)
+				var add_z := z - depth * 0.18
+				_box(Vector3(add_x, height + add_h * 0.5 + 0.18, add_z), Vector3(add_w, add_h, depth * 0.48), _std(concrete_colors[(i + 2) % concrete_colors.size()], 0.97))
+				_box(Vector3(add_x, height + add_h + 0.28, add_z), Vector3(add_w + 0.18, 0.12, depth * 0.52), _std(Color("#45484a"), 0.82, 0.2))
+				# Barandal de terraza hecho con postes finos y tubo superior.
+				var balcony_z := z + depth * 0.5 + 0.72
+				_box(Vector3(add_x, height + 0.82, balcony_z), Vector3(add_w + 0.5, 0.07, 0.07), rusty)
+				for rail_idx in 5:
+					_box(Vector3(add_x - (add_w + 0.5) * 0.5 + rail_idx * (add_w + 0.5) / 4.0, height + 0.42, balcony_z), Vector3(0.045, 0.8, 0.045), rusty)
+			if i % 3 == 1:
+				var stair_x := x - width * 0.5 - 0.36
+				for stair_idx in 10:
+					var step := _box(Vector3(stair_x, 0.18 + stair_idx * 0.27, front - stair_idx * 0.31), Vector3(0.8, 0.09, 0.48), _std(Color("#77716a"), 0.95))
+					step.rotation_degrees.y = -5.0
 			# Cable vertical y bajante de agua en la fachada.
 			_box(Vector3(x+width*0.43,height*0.5,front+0.2),Vector3(0.055,height,0.055),rusty)
 	# Cableado bajo cruzando el encuadre, sin invadir el área de juego.
