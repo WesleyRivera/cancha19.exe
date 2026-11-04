@@ -216,6 +216,7 @@ func build() -> void:
 	_build_neighborhood_details()
 	_build_far_lights()
 	_build_lamps()
+	_build_broadcast_lighting()
 	_build_laundry()
 	_build_crowd_and_stands()
 	_build_street_props()
@@ -604,6 +605,38 @@ func _build_lamps() -> void:
 		lamp.omni_range = 30.0
 		lamp.position = pos + Vector3(0, h - 0.4, 0)
 		add_child(lamp)
+
+
+# ---------- iluminacion direccional de retransmision ----------
+# Dos focos cruzados crean zonas de luz mas definidas sobre el cesped.
+# Se mantienen pocos para cuidar el rendimiento en graficos integrados.
+func _build_broadcast_lighting() -> void:
+	var rig_mat := _std(Color("#343a40"), 0.58, 0.62)
+	var housing_mat := _std(Color("#20252b"), 0.48, 0.55)
+	var positions := [
+		Vector3(-19.5, 10.2, 10.8),
+		Vector3(19.5, 10.2, 10.8)
+	]
+	for idx: int in positions.size():
+		var pos: Vector3 = positions[idx]
+		var arm := _box(pos + Vector3(0.0, 0.22, 0.0), Vector3(1.65, 0.12, 0.18), rig_mat)
+		arm.rotation_degrees.y = -12.0 if idx == 0 else 12.0
+		for lamp_idx: int in 3:
+			var offset := float(lamp_idx - 1) * 0.52
+			var housing := _box(pos + Vector3(offset, -0.12, -0.12), Vector3(0.42, 0.3, 0.22), housing_mat)
+			housing.rotation_degrees.x = -18.0
+			var lens := _box(pos + Vector3(offset, -0.12, -0.245), Vector3(0.3, 0.18, 0.025), _glow(Color("#fff1d2"), 2.8))
+			lens.rotation_degrees.x = -18.0
+		var spot := SpotLight3D.new()
+		spot.light_color = Color("#e4eaff")
+		spot.light_energy = 2.2
+		spot.spot_range = 38.0
+		spot.spot_angle = 42.0
+		spot.spot_angle_attenuation = 0.9
+		spot.shadow_enabled = idx == 0
+		spot.position = pos + Vector3(0.0, -0.25, -0.25)
+		add_child(spot)
+		spot.look_at(Vector3(0.0, 0.0, 0.0), Vector3.UP)
 
 
 # ---------- ropa tendida ----------
