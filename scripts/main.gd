@@ -801,8 +801,8 @@ func _update_cam(dt: float) -> void:
 	match cam_mode:
 		1: # Cooperativa: encuadre mas abierto y alto
 			offset = Vector3(0.0, cam_height + 5.0, 20.0)
-		2: # Lateral: camara desde la banda
-			offset = Vector3(0.0, cam_height * 0.78, 21.0)
+		2: # Lateral: camara desplazada hacia una banda
+			offset = Vector3(21.0, cam_height * 0.72, 0.0)
 		3: # Dinamica: menor distancia y seguimiento mas cercano
 			offset = Vector3(-2.0, cam_height * 0.82, 13.5)
 			tgt.x = clampf(bpos.x + bvel.x * 0.28, -14.0, 14.0)
