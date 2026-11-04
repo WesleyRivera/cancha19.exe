@@ -30,6 +30,7 @@ float fbm(vec2 p){
 
 const FLOOR_SHADER := """
 shader_type spatial;
+uniform sampler2D turf_tex : source_color;
 varying vec3 wp;
 void vertex(){ wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 //COMMON
@@ -42,6 +43,8 @@ void fragment(){
 	vec3 turf_a = vec3(0.035, 0.19, 0.075);
 	vec3 turf_b = vec3(0.075, 0.31, 0.12);
 	vec3 base = mix(turf_a, turf_b, smoothstep(0.2, 0.8, n));
+	vec3 turf_detail = texture(turf_tex, p * 0.42).rgb;
+	base = mix(base, base * turf_detail * 2.15, 0.46);
 	base *= stripe * fibers;
 	float worn = smoothstep(0.68, 0.86, fbm(p * 1.3 + 17.0));
 	base = mix(base, vec3(0.16, 0.18, 0.12), worn * 0.35);
@@ -68,6 +71,7 @@ void fragment(){
 
 const WALL_SHADER := """
 shader_type spatial;
+uniform sampler2D concrete_tex : source_color;
 varying vec3 wpos;
 varying vec3 wnrm;
 void vertex(){
@@ -82,7 +86,7 @@ void fragment(){
 		float v = wpos.y;
 		vec2 p = vec2(u, v);
 		float noise = vn(p * 2.1);
-		vec3 concrete = vec3(0.34, 0.32, 0.30) * (0.82 + noise * 0.28);
+		vec3 concrete = texture(concrete_tex, p * 0.18).rgb * (0.82 + noise * 0.28);
 		vec3 faded_paint = mix(vec3(0.18, 0.30, 0.37), vec3(0.48, 0.25, 0.19), vn(p * 0.32));
 		float paint_mask = smoothstep(0.35, 0.78, fbm(p * vec2(0.42, 0.9) + 4.0));
 		vec3 col = mix(concrete, faded_paint, paint_mask * 0.78);
@@ -311,10 +315,12 @@ func _build_environment() -> void:
 # ---------- piso ----------
 func _build_floor() -> void:
 	var fl := MeshInstance3D.new()
+	var floor_material := _smat(FLOOR_SHADER)
+	floor_material.set_shader_parameter("turf_tex", load("res://assets/textures/worn_turf.svg"))
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(44.0, 24.6)
 	fl.mesh = pm
-	fl.material_override = _smat(FLOOR_SHADER)
+	fl.material_override = floor_material
 	add_child(fl)
 	var outer := MeshInstance3D.new()
 	var om := PlaneMesh.new()
@@ -329,6 +335,7 @@ func _build_floor() -> void:
 func _build_walls() -> void:
 	var wm := ShaderMaterial.new()
 	wm.shader = _wall_shader
+	wm.set_shader_parameter("concrete_tex", _concrete_texture)
 	# fondo
 	_box(Vector3(0, 1.7, -12.3), Vector3(45.2, 3.4, 0.6), wm)
 	# lados de las porterías
