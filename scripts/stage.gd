@@ -497,6 +497,7 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 	_box(Vector3(x, h * 0.5, z), Vector3(w, h, d), m)
 	_house_front_details(x, z, w, h, d)
 	_house_roof(x, z, w, h, d)
+	_house_additions(x, z, w, h, d)
 	# cosas del techo: tanque de agua y varillas
 	if rng.randf() < 0.5:
 		var t := MeshInstance3D.new()
@@ -520,16 +521,55 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 		add_child(r)
 
 
+
+# Anexos irregulares: ampliaciones autoconstruidas y balcones de servicio.
+func _house_additions(x: float, z: float, w: float, h: float, d: float) -> void:
+	var concrete := _std(Color("#8b8177"), 0.96)
+	var raw_brick := _std(Color("#874b36"), 0.97)
+	var dark := _std(Color("#292b2d"), 0.88)
+	var rusty := _std(Color("#59483b"), 0.82, 0.22)
+	var front := z + d * 0.5 + 0.10
+	if rng.randf() < 0.62:
+		var side := -1.0 if rng.randf() < 0.5 else 1.0
+		var aw := rng.randf_range(1.3, 2.8)
+		var ah := rng.randf_range(1.8, 3.6)
+		var ay := rng.randf_range(2.0, maxf(2.2, h - ah - 0.6))
+		_box(Vector3(x + side * (w * 0.5 + aw * 0.32), ay + ah * 0.5, z), Vector3(aw, ah, rng.randf_range(2.0, 3.4)), concrete)
+		_box(Vector3(x + side * (w * 0.5 + aw * 0.32), ay + ah + 0.08, z), Vector3(aw + 0.16, 0.16, 3.5), dark)
+	if rng.randf() < 0.48:
+		var bx := x + rng.randf_range(-w * 0.3, w * 0.3)
+		var by := rng.randf_range(2.8, maxf(3.0, h - 1.8))
+		_box(Vector3(bx, by, front + 0.72), Vector3(rng.randf_range(1.5, 2.5), 0.12, 1.25), concrete)
+		for rail_x in 4:
+			_box(Vector3(bx - 0.85 + rail_x * 0.56, by + 0.48, front + 1.27), Vector3(0.045, 0.9, 0.045), rusty)
+		_box(Vector3(bx, by + 0.91, front + 1.27), Vector3(2.0, 0.045, 0.045), rusty)
+	if rng.randf() < 0.24:
+		var sx := x + w * 0.5 + 0.42
+		var sy := rng.randf_range(0.2, maxf(0.5, h - 3.0))
+		for step in 9:
+			_box(Vector3(sx, sy + step * 0.31, front - 0.2 - step * 0.27), Vector3(0.72, 0.075, 0.34), rusty)
+	if rng.randf() < 0.72:
+		var patch_x := x + rng.randf_range(-w * 0.34, w * 0.34)
+		var patch_y := rng.randf_range(0.8, maxf(1.0, h - 1.8))
+		_box(Vector3(patch_x, patch_y, front + 0.11), Vector3(rng.randf_range(0.65, 1.5), rng.randf_range(0.55, 1.3), 0.035), raw_brick)
+	if rng.randf() < 0.34:
+		var rw := rng.randf_range(1.8, 3.2)
+		var rh := rng.randf_range(1.5, 2.5)
+		var rx := x + rng.randf_range(-w * 0.25, w * 0.25)
+		var rz := z + rng.randf_range(-d * 0.2, d * 0.2)
+		_box(Vector3(rx, h + 0.24 + rh * 0.5, rz), Vector3(rw, rh, rng.randf_range(1.8, 2.8)), concrete)
+		_box(Vector3(rx, h + rh + 0.42, rz), Vector3(rw + 0.22, 0.16, 3.0), dark)
+
 func _build_houses() -> void:
 	# Filas escalonadas: el barrio sube por la ladera y se pierde en el fondo.
-	for row: int in 8:
-		var z0 := -15.8 - row * 5.5
+	for row: int in 10:
+		var z0 := -15.8 - row * 4.7
 		var x := -58.0 + (2.2 if row % 2 == 0 else 0.0)
 		while x < 58.0:
-			var w := rng.randf_range(5.2, 8.6)
-			var h := rng.randf_range(7.5, 11.5) + row * 3.7 + absf(x) * 0.045
-			_house(x + w * 0.5, z0, w, h, rng.randf_range(5.4, 7.0))
-			x += w - rng.randf_range(0.15, 0.75)
+			var w := rng.randf_range(4.2, 7.4)
+			var h := rng.randf_range(7.0, 12.5) + row * 3.4 + absf(x) * 0.045
+			_house(x + w * 0.5, z0 + rng.randf_range(-0.45, 0.45), w, h, rng.randf_range(4.8, 7.2))
+			x += w - rng.randf_range(0.25, 0.95)
 	# columnas a los lados
 	for s: int in [-1, 1]:
 		for col: int in 2:
