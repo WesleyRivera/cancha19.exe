@@ -1,0 +1,23 @@
+; Cancha 19 3D - proyecto de Godot 4.4
+config_version=5
+
+[application]
+
+config/name="Cancha 19 3D"
+config/description="Fútbol 5v5 callejero en una cancha de favela, con un elenco de personajes originales."
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+anti_aliasing/quality/msaa_3d=2
+environment/defaults/default_clear_color=Color(0.04, 0.05, 0.08, 1)
