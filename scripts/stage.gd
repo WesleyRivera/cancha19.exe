@@ -206,6 +206,8 @@ func build() -> void:
 	_build_far_lights()
 	_build_lamps()
 	_build_laundry()
+	_build_crowd_and_stands()
+	_build_street_props()
 
 
 # ---------- utilidades ----------
@@ -427,6 +429,12 @@ func _build_goals() -> void:
 			sd.material_override = net_m
 			sd.position = Vector3(s * (HX + depth * 0.5), 1.1, z * GZ)
 			add_child(sd)
+		# Refuerzos traseros y pequeños anclajes de la red.
+		for side_z: int in [-1, 1]:
+			var brace := _box(Vector3(s * (HX + depth * 0.72), 1.05, side_z * (GZ + 0.1)), Vector3(depth * 1.45, 0.07, 0.07), post_m)
+			brace.rotation_degrees.z = -s * 42.0
+		var base_left := _box(Vector3(gx, 0.08, -GZ), Vector3(0.18, 0.16, 0.18), _std(Color("#777b80"), 0.6, 0.4))
+		var base_right := _box(Vector3(gx, 0.08, GZ), Vector3(0.18, 0.16, 0.18), _std(Color("#777b80"), 0.6, 0.4))
 
 
 # ---------- casas ----------
@@ -719,3 +727,83 @@ func _house_roof(x: float, z: float, w: float, h: float, d: float) -> void:
 		_box(Vector3(x, roof_y + 0.42, z - d * 0.5), Vector3(w * 0.82, 0.62, 0.14), slab)
 	if rng.randf() < 0.45:
 		_box(Vector3(x + w * 0.5, roof_y + 0.3, z), Vector3(0.14, 0.42, d * 0.72), slab)
+
+
+# Gradas improvisadas y público de barrio detrás de la malla.
+func _build_crowd_and_stands() -> void:
+	var concrete := _std(Color("#55575a"), 0.92)
+	var seat_colors := [Color("#b64e37"), Color("#d5a84a"), Color("#426f83"), Color("#77716a")]
+	# Dos niveles bajos de gradas, fuera del terreno de juego.
+	for row: int in 2:
+		var z := 15.2 + row * 1.15
+		var y := 0.48 + row * 0.62
+		_box(Vector3(0.0, y, z), Vector3(38.0, 0.42, 0.92), concrete)
+		for seat: int in 19:
+			var sx := -17.5 + seat * 1.95
+			_box(Vector3(sx, y + 0.28, z - 0.12), Vector3(1.45, 0.12, 0.52), _std(seat_colors[(seat + row) % seat_colors.size()], 0.82))
+	# Público estilizado: siluetas sencillas para dar vida sin alterar la jugabilidad.
+	for person: int in 28:
+		var px := rng.randf_range(-17.5, 17.5)
+		var row_idx := person % 2
+		var py := 1.15 + row_idx * 0.58
+		var pz := 14.9 + row_idx * 1.15
+		var shirt := _std(seat_colors[rng.randi() % seat_colors.size()], 0.9)
+		var skin_colors := [Color("#8b5941"), Color("#b87955"), Color("#d19a70"), Color("#5b392d")]
+		var skin := _std(skin_colors[rng.randi() % skin_colors.size()], 0.95)
+		var torso := MeshInstance3D.new()
+		var body := CapsuleMesh.new()
+		body.radius = 0.22
+		body.height = 0.82
+		torso.mesh = body
+		torso.material_override = shirt
+		torso.position = Vector3(px, py + 0.25, pz)
+		add_child(torso)
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.17
+		head_mesh.height = 0.34
+		head.mesh = head_mesh
+		head.material_override = skin
+		head.position = Vector3(px, py + 0.83, pz)
+		add_child(head)
+		# Brazos levantados en algunos aficionados.
+		if person % 4 == 0:
+			for arm_side: int in [-1, 1]:
+				var arm := _box(Vector3(px + arm_side * 0.31, py + 0.62, pz), Vector3(0.09, 0.58, 0.09), skin)
+				arm.rotation_degrees.z = -arm_side * 24.0
+
+# Elementos urbanos alrededor de la cancha: bancas, contenedores y postes.
+func _build_street_props() -> void:
+	var metal := _std(Color("#34393d"), 0.72, 0.35)
+	var wood := _std(Color("#72513a"), 0.9)
+	var plastic := _std(Color("#315c49"), 0.9)
+	# Bancas y pequeños puestos junto a los laterales, fuera de las líneas.
+	for side: int in [-1, 1]:
+		for idx: int in 3:
+			var z := -7.0 + idx * 6.5
+			var x := side * 24.2
+			_box(Vector3(x, 0.72, z), Vector3(1.65, 0.12, 0.55), wood)
+			for leg_x: int in [-1, 1]:
+				_box(Vector3(x + leg_x * 0.62, 0.36, z), Vector3(0.08, 0.72, 0.08), metal)
+		_box(Vector3(side * 25.0, 0.72, 10.0), Vector3(0.85, 1.15, 0.85), plastic)
+	# Faroles de calle en el ascenso hacia las casas.
+	for lamp_idx: int in 7:
+		var lx := -48.0 + lamp_idx * 16.0
+		var ly := 7.0 + lamp_idx * 0.55
+		var lz := -20.0 - (lamp_idx % 3) * 8.0
+		var pole := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 0.055
+		pm.bottom_radius = 0.09
+		pm.height = 6.0
+		pole.mesh = pm
+		pole.material_override = metal
+		pole.position = Vector3(lx, ly + 3.0, lz)
+		add_child(pole)
+		_box(Vector3(lx + 0.38, ly + 5.85, lz), Vector3(0.85, 0.12, 0.16), _glow(Color("#ffd99a"), 1.6))
+		var glow := OmniLight3D.new()
+		glow.light_color = Color("#ffbf78")
+		glow.light_energy = 0.65
+		glow.omni_range = 8.0
+		glow.position = Vector3(lx + 0.35, ly + 5.5, lz)
+		add_child(glow)
