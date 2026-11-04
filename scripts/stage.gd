@@ -33,14 +33,12 @@ void vertex(){ wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 //COMMON
 void fragment(){
 	vec2 p = wp.xz;
-	vec3 green = vec3(0.17, 0.42, 0.27);
-	vec3 grey = vec3(0.42, 0.43, 0.44);
-	vec3 blue = vec3(0.16, 0.42, 0.68);
-	vec3 orange = vec3(0.78, 0.52, 0.14);
+	vec3 green = vec3(0.075, 0.27, 0.13);
+	vec3 grey = vec3(0.30, 0.32, 0.29);
 	float in_area = step(14.0, abs(p.x)) * step(abs(p.y), 7.0);
-	float circ = step(length(p), 3.6);
-	vec3 base = mix(green, orange, in_area * 0.9);
-	base = mix(base, blue, circ);
+	vec3 base = mix(green, vec3(0.22, 0.24, 0.21), in_area * 0.72);
+	float mowing = 0.94 + 0.06 * sin(p.x * 1.35);
+	base *= mowing;
 	float n1 = fbm(p * 0.35);
 	float n2 = fbm(p * 1.7 + 7.0);
 	base *= 0.8 + 0.5 * n1;
@@ -445,6 +443,7 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 	m.set_shader_parameter("brick_mix", 1.0 if rng.randf() < 0.55 else rng.randf_range(0.0, 0.4))
 	m.set_shader_parameter("seed", rng.randf() * 20.0)
 	_box(Vector3(x, h * 0.5, z), Vector3(w, h, d), m)
+	_house_front_details(x, z, w, h, d)
 	# cosas del techo: tanque de agua y varillas
 	if rng.randf() < 0.5:
 		var t := MeshInstance3D.new()
@@ -643,3 +642,49 @@ func _cable(a: Vector3, b: Vector3, mat: Material) -> void:
 	wire.look_at(b, Vector3.UP)
 	wire.rotate_object_local(Vector3.RIGHT, PI * 0.5)
 	add_child(wire)
+
+
+# ---------- arquitectura de fachada para dar escala y vida al barrio ----------
+func _house_front_details(x: float, z: float, w: float, h: float, d: float) -> void:
+	var front := z + d * 0.5 + 0.075
+	var metal := _std(Color("#34383b"), 0.72, 0.35)
+	var concrete := _std(Color("#b7aaa0"), 0.92)
+	var dark := _std(Color("#171b20"), 0.85)
+	var door_mat := _std(Color("#49352c"), 0.9)
+	var accent_colors := [Color("#e6b84a"), Color("#4d9a91"), Color("#c66b50"), Color("#d6d0bd")]
+	var accent := _std(accent_colors[rng.randi() % accent_colors.size()], 0.88)
+
+	# Marcos y contraventanas: pocas piezas por vivienda para mantener buen rendimiento.
+	var floors := maxi(1, int(h / 3.0))
+	for floor_idx in mini(floors, 3):
+		var wy := 1.35 + floor_idx * 2.65
+		if wy + 0.8 > h - 0.25:
+			continue
+		var wx := x + rng.randf_range(-w * 0.22, w * 0.22)
+		var ww := rng.randf_range(0.85, 1.25)
+		_box(Vector3(wx, wy, front), Vector3(ww + 0.22, 1.05, 0.12), dark)
+		_box(Vector3(wx, wy, front + 0.085), Vector3(ww, 0.82, 0.045), accent)
+		_box(Vector3(wx, wy, front + 0.12), Vector3(0.055, 0.9, 0.05), metal)
+		_box(Vector3(wx, wy, front + 0.12), Vector3(ww, 0.055, 0.05), metal)
+		if rng.randf() < 0.58:
+			var balcony_y := wy - 0.55
+			_box(Vector3(wx, balcony_y, front + 0.55), Vector3(ww + 0.55, 0.12, 1.05), concrete)
+			_box(Vector3(wx, balcony_y + 0.55, front + 1.02), Vector3(ww + 0.55, 0.08, 0.08), metal)
+			for rail_idx in 4:
+				_box(Vector3(wx - (ww + 0.3) * 0.5 + rail_idx * (ww + 0.3) / 3.0, balcony_y + 0.28, front + 1.02), Vector3(0.045, 0.5, 0.045), metal)
+
+	# Puerta de entrada y pequeño alero en la planta baja.
+	var door_x := x + rng.randf_range(-w * 0.28, w * 0.28)
+	_box(Vector3(door_x, 1.05, front + 0.04), Vector3(0.95, 2.1, 0.14), door_mat)
+	_box(Vector3(door_x, 2.18, front + 0.16), Vector3(1.18, 0.12, 0.48), accent)
+	_box(Vector3(door_x + 0.31, 1.0, front + 0.14), Vector3(0.07, 0.07, 0.07), _glow(Color("#f2c56b"), 0.7))
+
+	# Unidades de aire, toldos y tuberías exteriores en algunas casas.
+	if rng.randf() < 0.42:
+		var ax := x + rng.randf_range(-w * 0.32, w * 0.32)
+		var ay := rng.randf_range(2.8, maxf(3.0, h - 1.0))
+		_box(Vector3(ax, ay, front + 0.28), Vector3(0.72, 0.42, 0.34), concrete)
+		_box(Vector3(ax, ay, front + 0.47), Vector3(0.48, 0.12, 0.025), dark)
+	if rng.randf() < 0.38:
+		var awning_x := x + rng.randf_range(-w * 0.2, w * 0.2)
+		_box(Vector3(awning_x, 2.65, front + 0.55), Vector3(rng.randf_range(1.5, 2.6), 0.12, 1.0), accent)
