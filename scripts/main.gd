@@ -81,7 +81,7 @@ var cam_options: OptionButton
 var cam_height_slider: HSlider
 var cam_zoom_slider: HSlider
 var cam_settings_box: VBoxContainer
-var cam_height := 13.5
+var cam_height := 14.5
 var cam_fov := 52.0
 var cam_mode := 0
 
@@ -360,7 +360,7 @@ func _load_camera_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load("user://camera.cfg") == OK:
 		cam_mode = clampi(int(config.get_value("camera", "mode", 0)), 0, 4)
-		cam_height = clampf(float(config.get_value("camera", "height", 13.5)), 9.0, 23.0)
+		cam_height = clampf(float(config.get_value("camera", "height", 14.5)), 9.0, 23.0)
 		cam_fov = clampf(float(config.get_value("camera", "fov", 52.0)), 38.0, 72.0)
 	cam.fov = cam_fov
 
@@ -377,7 +377,7 @@ func _save_camera_settings() -> void:
 
 func _reset_camera_settings() -> void:
 	cam_mode = 0
-	cam_height = 13.5
+	cam_height = 14.5
 	cam_fov = 52.0
 	cam_options.select(cam_mode)
 	cam_height_slider.value = cam_height
@@ -835,10 +835,12 @@ func _update_cam(dt: float) -> void:
 	else:
 		tgt = Vector3(clampf(bpos.x + bvel.x * 0.15, -12.0, 12.0), 0.0, clampf(bpos.y + bvel.y * 0.15, -4.0, 4.0) * 0.6)
 	cam_t = cam_t.lerp(tgt, 1.0 - exp(-dt * 4.0))
-	var offset := Vector3(0.0, cam_height, 17.0)
+	# Encuadre principal diagonal elevado, como una transmision de futbol callejero.
+	# Mantiene visible casi toda la cancha y deja entrar el barrio del fondo en la composicion.
+	var offset := Vector3(-10.5, cam_height + 1.5, 19.0)
 	match cam_mode:
-		1: # Cooperativa: encuadre mas abierto y alto
-			offset = Vector3(0.0, cam_height + 5.0, 20.0)
+		1: # Cooperativa: encuadre diagonal mas abierto y alto
+			offset = Vector3(-12.5, cam_height + 6.0, 23.0)
 		2: # Lateral: camara desplazada hacia una banda
 			offset = Vector3(21.0, cam_height * 0.72, 0.0)
 		3: # Dinamica: menor distancia y seguimiento mas cercano
