@@ -843,7 +843,10 @@ func _house_front_details(x: float, z: float, w: float, h: float, d: float) -> v
 # Techos de losa y lámina, con parapetos y bordes irregulares.
 func _house_roof(x: float, z: float, w: float, h: float, d: float) -> void:
 	var slab := _std(Color("#77716b"), 0.96)
+	var slab_tex := load("res://assets/textures/roof_concrete.svg") as Texture2D
+	slab.albedo_texture = slab_tex
 	var sheet := _std(Color("#555b60"), 0.78, 0.28)
+	sheet.albedo_texture = load("res://assets/textures/corrugated_metal.svg") as Texture2D
 	var edge := _std(Color("#393b3c"), 0.9)
 	var roof_y := h + 0.12
 	_box(Vector3(x, roof_y, z), Vector3(w + 0.28, 0.24, d + 0.28), slab)
