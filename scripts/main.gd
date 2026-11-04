@@ -77,6 +77,13 @@ var overlay: ColorRect
 var ov_title: Label
 var ov_text: Label
 var ov_btn: Button
+var cam_options: OptionButton
+var cam_height_slider: HSlider
+var cam_zoom_slider: HSlider
+var cam_settings_box: VBoxContainer
+var cam_height := 13.5
+var cam_fov := 52.0
+var cam_mode := 0
 
 var autotest := false
 var shot_dir := ""
@@ -300,7 +307,65 @@ func _build_hud() -> void:
 	ov_btn.custom_minimum_size = Vector2(260, 64)
 	ov_btn.pressed.connect(_start)
 	vb.add_child(ov_btn)
+
+	var settings_btn := Button.new()
+	settings_btn.text = "Ajustes de cámara"
+	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.pressed.connect(_toggle_camera_settings)
+	vb.add_child(settings_btn)
+
+	cam_settings_box = VBoxContainer.new()
+	cam_settings_box.add_theme_constant_override("separation", 8)
+	cam_settings_box.visible = false
+	vb.add_child(cam_settings_box)
+	var cam_title := _label("PERSPECTIVA", 20, Color("#ffd23a"))
+	cam_settings_box.add_child(cam_title)
+	cam_options = OptionButton.new()
+	cam_options.add_item("TV - transmisión diagonal")
+	cam_options.add_item("Cooperativa - más amplia")
+	cam_options.add_item("Lateral - vista de banda")
+	cam_options.add_item("Dinámica - sigue más la jugada")
+	cam_options.add_item("Clásica - cámara elevada")
+	cam_options.selected = 0
+	cam_options.item_selected.connect(_on_camera_mode_selected)
+	cam_settings_box.add_child(cam_options)
+	cam_settings_box.add_child(_label("Altura de cámara", 16))
+	cam_height_slider = HSlider.new()
+	cam_height_slider.min_value = 9.0
+	cam_height_slider.max_value = 23.0
+	cam_height_slider.step = 0.5
+	cam_height_slider.value = cam_height
+	cam_height_slider.custom_minimum_size = Vector2(360, 24)
+	cam_height_slider.value_changed.connect(_on_camera_height_changed)
+	cam_settings_box.add_child(cam_height_slider)
+	cam_settings_box.add_child(_label("Campo de visión / zoom", 16))
+	cam_zoom_slider = HSlider.new()
+	cam_zoom_slider.min_value = 38.0
+	cam_zoom_slider.max_value = 72.0
+	cam_zoom_slider.step = 1.0
+	cam_zoom_slider.value = cam_fov
+	cam_zoom_slider.custom_minimum_size = Vector2(360, 24)
+	cam_zoom_slider.value_changed.connect(_on_camera_zoom_changed)
+	cam_settings_box.add_child(cam_zoom_slider)
+
 	_show_overlay("CANCHA 19", "Fútbol 5 contra 5 en la cancha de la favela.\nCada partido sale con un elenco distinto de personajes al azar.\n\nMover: WASD o flechas   ·   Pase / cambiar jugador: X   ·   Tiro: mantén Espacio y suelta   ·   Correr: Shift\nMando: A pase, X tiro, gatillo derecho correr.", "Jugar")
+
+
+func _toggle_camera_settings() -> void:
+	cam_settings_box.visible = not cam_settings_box.visible
+
+
+func _on_camera_mode_selected(index: int) -> void:
+	cam_mode = index
+
+
+func _on_camera_height_changed(value: float) -> void:
+	cam_height = value
+
+
+func _on_camera_zoom_changed(value: float) -> void:
+	cam_fov = value
+	cam.fov = cam_fov
 
 
 func _show_overlay(title: String, text: String, btn: String) -> void:
@@ -732,7 +797,19 @@ func _update_cam(dt: float) -> void:
 	else:
 		tgt = Vector3(clampf(bpos.x + bvel.x * 0.15, -12.0, 12.0), 0.0, clampf(bpos.y + bvel.y * 0.15, -4.0, 4.0) * 0.6)
 	cam_t = cam_t.lerp(tgt, 1.0 - exp(-dt * 4.0))
-	cam.position = cam_t + Vector3(0.0, 13.5, 17.0)
+	var offset := Vector3(0.0, cam_height, 17.0)
+	match cam_mode:
+		1: # Cooperativa: encuadre mas abierto y alto
+			offset = Vector3(0.0, cam_height + 5.0, 20.0)
+		2: # Lateral: camara desde la banda
+			offset = Vector3(0.0, cam_height * 0.78, 21.0)
+		3: # Dinamica: menor distancia y seguimiento mas cercano
+			offset = Vector3(-2.0, cam_height * 0.82, 13.5)
+			tgt.x = clampf(bpos.x + bvel.x * 0.28, -14.0, 14.0)
+			tgt.z = clampf(bpos.y + bvel.y * 0.28, -5.5, 5.5) * 0.7
+		4: # Clasica: vista elevada casi cenital
+			offset = Vector3(0.0, cam_height + 8.0, 10.0)
+	cam.position = cam_t + offset
 	cam.look_at(cam_t + Vector3(0.0, 0.0, 0.3))
 
 
