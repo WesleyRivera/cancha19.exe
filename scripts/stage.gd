@@ -265,10 +265,10 @@ func _smat(code: String) -> ShaderMaterial:
 # ---------- cielo, luces y niebla ----------
 func _build_environment() -> void:
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("#101a3d")
-	sky_mat.sky_horizon_color = Color("#f08a5a")
-	sky_mat.ground_horizon_color = Color("#3a2a3a")
-	sky_mat.ground_bottom_color = Color("#120e18")
+	sky_mat.sky_top_color = Color("#080f25")
+	sky_mat.sky_horizon_color = Color("#26304a")
+	sky_mat.ground_horizon_color = Color("#171d30")
+	sky_mat.ground_bottom_color = Color("#080b16")
 	sky_mat.sky_curve = 0.18
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
@@ -276,23 +276,23 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.55, 0.58, 0.78)
-	env.ambient_light_energy = 0.72
+	env.ambient_light_color = Color("#53617f")
+	env.ambient_light_energy = 0.52
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
 	env.glow_enabled = true
 	env.glow_intensity = 0.85
 	env.glow_bloom = 0.1
 	env.fog_enabled = true
-	env.fog_light_color = Color("#7a5a78")
-	env.fog_density = 0.0032
+	env.fog_light_color = Color("#30354c")
+	env.fog_density = 0.0024
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, 28, 0)
-	sun.light_color = Color(1.0, 0.8, 0.62)
-	sun.light_energy = 0.38
+	sun.light_color = Color("#9eafd9")
+	sun.light_energy = 0.28
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 95.0
 	add_child(sun)
