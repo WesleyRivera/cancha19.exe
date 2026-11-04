@@ -391,7 +391,7 @@ func _build_walls() -> void:
 			rail.mesh = rail_mesh
 			rail.material_override = pole_m
 			rail.position = Vector3(0.0, y, z_side * 12.4)
-			trail.rotation_degrees.z = 90.0
+			rail.rotation_degrees.z = 90.0
 			add_child(rail)
 	for side: int in [-1, 1]:
 		for y: float in [0.55, 4.65]:
@@ -403,7 +403,7 @@ func _build_walls() -> void:
 			rail.mesh = rail_mesh
 			rail.material_override = pole_m
 			rail.position = Vector3(side * 22.0, y, 0.0)
-			trail.rotation_degrees.x = 90.0
+			rail.rotation_degrees.x = 90.0
 			add_child(rail)
 	# letreros en la pared del fondo
 	_sign("CANCHA 19", Vector3(0, 1.75, -11.97), 190, Color("#ffd23a"))
