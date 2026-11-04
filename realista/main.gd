@@ -133,10 +133,9 @@ func _build_camera() -> void:
 	camera.current = true
 
 func _physics_process(delta: float) -> void:
-	var input := Vector2(
-		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
-		Input.get_action_strength("move_back") - Input.get_action_strength("move_forward")
-	)
+	var input := Vector2.ZERO
+	input.x = float(Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)) - float(Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT))
+	input.y = float(Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)) - float(Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP))
 	if input.length() > 1.0:
 		input = input.normalized()
 	player.position.x += input.x * move_speed * delta
@@ -145,6 +144,6 @@ func _physics_process(delta: float) -> void:
 	player.position.z = clampf(player.position.z, -10.5, 10.5)
 	if input.length() > 0.05:
 		player.rotation.y = atan2(input.x, input.y)
-	if Input.is_action_just_pressed("kick") and player.global_position.distance_to(ball.global_position) < 2.0:
+	if Input.is_key_pressed(KEY_SPACE) and player.global_position.distance_to(ball.global_position) < 2.0 and ball.linear_velocity.length() < 0.5:
 		var direction := (ball.global_position - player.global_position).normalized()
 		ball.apply_central_impulse(Vector3(direction.x, 0.18, direction.z) * 5.5)
