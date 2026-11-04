@@ -33,39 +33,34 @@ void vertex(){ wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 //COMMON
 void fragment(){
 	vec2 p = wp.xz;
-	vec3 green = vec3(0.075, 0.27, 0.13);
-	vec3 grey = vec3(0.30, 0.32, 0.29);
-	float in_area = step(14.0, abs(p.x)) * step(abs(p.y), 7.0);
-	vec3 base = mix(green, vec3(0.22, 0.24, 0.21), in_area * 0.72);
-	float mowing = 0.94 + 0.06 * sin(p.x * 1.35);
-	base *= mowing;
-	float n1 = fbm(p * 0.35);
-	float n2 = fbm(p * 1.7 + 7.0);
-	base *= 0.8 + 0.5 * n1;
-	float wear = smoothstep(0.55, 0.72, fbm(p * 0.9 + 11.0) + 0.15 * n2);
-	base = mix(base, grey * (0.8 + 0.4 * n2), wear * 0.85);
-	vec2 sj = abs(fract(p / 4.0 + 0.5) - 0.5) * 4.0;
-	float joint = 1.0 - smoothstep(0.0, 0.05, min(sj.x, sj.y));
-	base *= 1.0 - joint * 0.45;
-	float cr = abs(fbm(p * 0.6 + 31.0) - 0.5);
-	base *= 1.0 - 0.28 * (1.0 - smoothstep(0.0, 0.01, cr));
-	base *= 1.0 - 0.25 * smoothstep(0.6, 0.9, fbm(p * 0.5 + 50.0));
-	float w = 0.075;
+	float n = fbm(p * 2.8);
+	float fine = vn(p * 38.0);
+	float fibers = 0.94 + 0.06 * sin(p.x * 115.0 + fine * 8.0);
+	float stripe = 0.94 + 0.06 * sin(p.x * 0.72);
+	vec3 turf_a = vec3(0.035, 0.19, 0.075);
+	vec3 turf_b = vec3(0.075, 0.31, 0.12);
+	vec3 base = mix(turf_a, turf_b, smoothstep(0.2, 0.8, n));
+	base *= stripe * fibers;
+	float worn = smoothstep(0.68, 0.86, fbm(p * 1.3 + 17.0));
+	base = mix(base, vec3(0.16, 0.18, 0.12), worn * 0.35);
+	float outside = step(14.0, abs(p.x)) * step(abs(p.y), 7.0);
+	base = mix(base, vec3(0.12, 0.13, 0.12), outside);
+	float line = 0.0;
+	float w = 0.065;
 	float ax = abs(p.x); float az = abs(p.y);
-	float l = 0.0;
-	l = max(l, step(abs(ax - 19.925), w) * step(az, 12.0));
-	l = max(l, step(abs(az - 11.925), w) * step(ax, 20.0));
-	l = max(l, step(ax, w) * step(az, 12.0));
-	l = max(l, step(abs(length(p) - 3.6), w));
-	l = max(l, step(abs(ax - 14.0), w) * step(az, 7.0));
-	l = max(l, step(abs(az - 7.0), w) * step(14.0, ax) * step(ax, 20.0));
-	l = max(l, step(length(vec2(ax - 16.5, p.y)), 0.13));
-	l = max(l, step(length(p), 0.13));
-	float paint = l * (1.0 - wear * 0.55 * smoothstep(0.4, 0.7, fbm(p * 3.0)));
-	vec3 col = mix(base, vec3(0.93, 0.93, 0.9), paint * 0.95);
-	ALBEDO = col;
-	ROUGHNESS = 0.88;
-	SPECULAR = 0.2;
+	line = max(line, step(abs(ax - 19.925), w) * step(az, 12.0));
+	line = max(line, step(abs(az - 11.925), w) * step(ax, 20.0));
+	line = max(line, step(ax, w) * step(az, 12.0));
+	line = max(line, step(abs(length(p) - 3.6), w));
+	line = max(line, step(abs(ax - 14.0), w) * step(az, 7.0));
+	line = max(line, step(abs(az - 7.0), w) * step(14.0, ax) * step(ax, 20.0));
+	line = max(line, step(length(vec2(ax - 16.5, p.y)), 0.12));
+	line = max(line, step(length(p), 0.12));
+	float penalty_spot = step(length(vec2(ax - 16.5, p.y)), 0.13);
+	line = max(line, penalty_spot);
+	ALBEDO = mix(base, vec3(0.88, 0.9, 0.82), line);
+	ROUGHNESS = 0.94;
+	SPECULAR = 0.12;
 }
 """
 
@@ -266,24 +261,24 @@ func _build_environment() -> void:
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.55, 0.58, 0.78)
-	env.ambient_light_energy = 0.5
+	env.ambient_light_energy = 0.72
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
 	env.glow_enabled = true
-	env.glow_intensity = 0.7
+	env.glow_intensity = 0.85
 	env.glow_bloom = 0.1
 	env.fog_enabled = true
 	env.fog_light_color = Color("#7a5a78")
-	env.fog_density = 0.0045
+	env.fog_density = 0.0032
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, 28, 0)
 	sun.light_color = Color(1.0, 0.8, 0.62)
-	sun.light_energy = 0.5
+	sun.light_energy = 0.38
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 55.0
+	sun.directional_shadow_max_distance = 95.0
 	add_child(sun)
 
 
@@ -512,8 +507,21 @@ func _build_far_lights() -> void:
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
 	add_child(inst)
-	# cerro oscuro detrás de todo
-	_box(Vector3(0, 30, -72), Vector3(240, 90, 14), _std(Color("#141822"), 1.0))
+	# Silueta irregular de las montañas: evita que el horizonte parezca una pared plana.
+	var hill_mat := _std(Color("#202633"), 1.0)
+	for hill: int in 9:
+		var mound := MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 1.0
+		sphere.height = 2.0
+		mound.mesh = sphere
+		mound.material_override = hill_mat
+		var hx := -105.0 + hill * 26.0
+		mound.position = Vector3(hx, 12.0 + rng.randf_range(-2.0, 5.0), -78.0 - rng.randf_range(0.0, 12.0))
+		mound.scale = Vector3(rng.randf_range(16.0, 25.0), rng.randf_range(17.0, 27.0), 8.0)
+		add_child(mound)
+	# Fondo oscuro que oculta el corte de las montañas y conserva profundidad.
+	_box(Vector3(0, 25, -94), Vector3(260, 70, 8), _std(Color("#171d29"), 1.0))
 
 
 # ---------- postes de luz ----------
