@@ -208,6 +208,7 @@ func build() -> void:
 	_build_laundry()
 	_build_crowd_and_stands()
 	_build_street_props()
+	_build_rooftop_details()
 
 
 # ---------- utilidades ----------
@@ -621,29 +622,62 @@ func _build_neighborhood_details() -> void:
 		if i % 2 == 0:
 			_cable(cable_points[i], cable_points[i + 1] + Vector3(0.0, -2.2, -1.0), dark_metal)
 
-	# Palmeras y arboles en los bordes del asentamiento.
-	for tree: int in 9:
-		var tx := rng.randf_range(-58.0, 58.0)
-		var tz := rng.randf_range(-48.0, -18.0)
-		var th := rng.randf_range(4.0, 7.0)
+	# Vegetación tropical: palmeras con hojas individuales y árboles frondosos.
+	for tree: int in 15:
+		var tx := rng.randf_range(-68.0, 68.0)
+		var tz := rng.randf_range(-62.0, -17.0)
+		var th := rng.randf_range(4.8, 8.5)
+		var trunk_mat := _std(Color("#49382c"), 0.96)
+		var leaf_mat := _std(Color("#244b35"), 0.98)
 		var trunk := MeshInstance3D.new()
 		var trunk_mesh := CylinderMesh.new()
-		trunk_mesh.top_radius = 0.16
+		trunk_mesh.top_radius = 0.13
 		trunk_mesh.bottom_radius = 0.28
 		trunk_mesh.height = th
 		trunk.mesh = trunk_mesh
-		trunk.material_override = _std(Color("#49382c"), 0.95)
-		trunk.position = Vector3(tx, 3.0 + th * 0.5, tz)
+		trunk.material_override = trunk_mat
+		trunk.position = Vector3(tx, 2.5 + th * 0.5, tz)
+		trunk.rotation_degrees.z = rng.randf_range(-7.0, 7.0)
 		add_child(trunk)
-		var crown := MeshInstance3D.new()
-		var crown_mesh := SphereMesh.new()
-		crown_mesh.radius = rng.randf_range(1.5, 2.4)
-		crown_mesh.height = crown_mesh.radius * 1.25
-		crown.mesh = crown_mesh
-		crown.material_override = _std(Color("#244b35"), 0.98)
-		crown.position = Vector3(tx, 3.0 + th, tz)
-		crown.scale = Vector3(1.35, 0.75, 1.0)
-		add_child(crown)
+		if tree % 3 == 0:
+			# Palmeras: siete hojas largas que salen de la corona.
+			for frond: int in 7:
+				var angle := TAU * float(frond) / 7.0 + rng.randf_range(-0.18, 0.18)
+				var leaf := MeshInstance3D.new()
+				var leaf_mesh := BoxMesh.new()
+				leaf_mesh.size = Vector3(rng.randf_range(2.4, 3.6), 0.09, 0.34)
+				leaf.mesh = leaf_mesh
+				leaf.material_override = _std(Color("#2e7043") if frond % 2 == 0 else Color("#397d4b"), 0.98)
+				leaf.position = Vector3(tx + cos(angle) * 1.25, 2.5 + th + 0.18, tz + sin(angle) * 1.25)
+				leaf.rotation = Vector3(-0.22, -angle, -0.38)
+				add_child(leaf)
+		else:
+			# Copas frondosas compuestas por varios volúmenes, no una sola esfera.
+			for clump: int in 5:
+				var angle := TAU * float(clump) / 5.0
+				var crown := MeshInstance3D.new()
+				var crown_mesh := SphereMesh.new()
+				crown_mesh.radius = rng.randf_range(1.25, 1.9)
+				crown_mesh.height = crown_mesh.radius * 1.4
+				crown.mesh = crown_mesh
+				crown.material_override = leaf_mat
+				crown.position = Vector3(tx + cos(angle) * 0.9, 2.5 + th, tz + sin(angle) * 0.9)
+				crown.scale = Vector3(1.2, 0.85, 1.0)
+				add_child(crown)
+	# Macizos bajos junto a calles y escalinatas.
+	for bush: int in 34:
+		var bx := rng.randf_range(-62.0, 62.0)
+		var bz := rng.randf_range(-58.0, -17.0)
+		var bush_mat := _std(Color("#244b35") if bush % 2 == 0 else Color("#315d3c"), 1.0)
+		var shrub := MeshInstance3D.new()
+		var shrub_mesh := SphereMesh.new()
+		shrub_mesh.radius = rng.randf_range(0.45, 0.9)
+		shrub_mesh.height = shrub_mesh.radius * 1.3
+		shrub.mesh = shrub_mesh
+		shrub.material_override = bush_mat
+		shrub.position = Vector3(bx, 2.8, bz)
+		shrub.scale = Vector3(1.5, 0.8, 1.0)
+		add_child(shrub)
 
 
 func _cable(a: Vector3, b: Vector3, mat: Material) -> void:
@@ -807,3 +841,45 @@ func _build_street_props() -> void:
 		glow.omni_range = 8.0
 		glow.position = Vector3(lx + 0.35, ly + 5.5, lz)
 		add_child(glow)
+
+
+# Detalles pequeños sobre los techos para romper la repetición de las siluetas.
+func _build_rooftop_details() -> void:
+	var tank_mat := _std(Color("#285b83"), 0.58, 0.12)
+	var dark_metal := _std(Color("#303338"), 0.72, 0.3)
+	var water_mat := _std(Color("#4d8eb4"), 0.32, 0.15)
+	for item: int in 26:
+		var x := rng.randf_range(-58.0, 58.0)
+		var z := rng.randf_range(-57.0, -18.0)
+		var h := rng.randf_range(13.0, 35.0)
+		var radius := rng.randf_range(0.48, 0.78)
+		var tank := MeshInstance3D.new()
+		var tank_mesh := CylinderMesh.new()
+		tank_mesh.top_radius = radius * 0.94
+		tank_mesh.bottom_radius = radius
+		tank_mesh.height = rng.randf_range(1.0, 1.6)
+		tank.mesh = tank_mesh
+		tank.material_override = tank_mat
+		tank.position = Vector3(x, h + 0.9, z)
+		add_child(tank)
+		if item % 3 == 0:
+			var lid := MeshInstance3D.new()
+			var lid_mesh := CylinderMesh.new()
+			lid_mesh.top_radius = radius * 0.35
+			lid_mesh.bottom_radius = radius * 0.35
+			lid_mesh.height = 0.08
+			lid.mesh = lid_mesh
+			lid.material_override = water_mat
+			lid.position = Vector3(x, h + 1.72, z)
+			add_child(lid)
+		if item % 2 == 0:
+			for leg: int in 3:
+				var support := MeshInstance3D.new()
+				var support_mesh := CylinderMesh.new()
+				support_mesh.top_radius = 0.035
+				support_mesh.bottom_radius = 0.035
+				support_mesh.height = 0.9
+				support.mesh = support_mesh
+				support.material_override = dark_metal
+				support.position = Vector3(x + cos(TAU * leg / 3.0) * radius * 0.7, h + 0.42, z + sin(TAU * leg / 3.0) * radius * 0.7)
+				add_child(support)
