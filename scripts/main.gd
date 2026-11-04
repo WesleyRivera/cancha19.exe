@@ -105,6 +105,7 @@ func _ready() -> void:
 	cam = Camera3D.new()
 	cam.fov = 52.0
 	add_child(cam)
+	_load_camera_settings()
 	_build_confetti()
 	_build_hud()
 	_spawn_players()
@@ -326,7 +327,7 @@ func _build_hud() -> void:
 	cam_options.add_item("Lateral - vista de banda")
 	cam_options.add_item("Dinámica - sigue más la jugada")
 	cam_options.add_item("Clásica - cámara elevada")
-	cam_options.selected = 0
+	cam_options.selected = cam_mode
 	cam_options.item_selected.connect(_on_camera_mode_selected)
 	cam_settings_box.add_child(cam_options)
 	cam_settings_box.add_child(_label("Altura de cámara", 16))
@@ -347,8 +348,42 @@ func _build_hud() -> void:
 	cam_zoom_slider.custom_minimum_size = Vector2(360, 24)
 	cam_zoom_slider.value_changed.connect(_on_camera_zoom_changed)
 	cam_settings_box.add_child(cam_zoom_slider)
+	var reset_cam_btn := Button.new()
+	reset_cam_btn.text = "Restablecer cámara"
+	reset_cam_btn.pressed.connect(_reset_camera_settings)
+	cam_settings_box.add_child(reset_cam_btn)
 
 	_show_overlay("CANCHA 19", "Fútbol 5 contra 5 en la cancha de la favela.\nCada partido sale con un elenco distinto de personajes al azar.\n\nMover: WASD o flechas   ·   Pase / cambiar jugador: X   ·   Tiro: mantén Espacio y suelta   ·   Correr: Shift\nMando: A pase, X tiro, gatillo derecho correr.", "Jugar")
+
+
+func _load_camera_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://camera.cfg") == OK:
+		cam_mode = clampi(int(config.get_value("camera", "mode", 0)), 0, 4)
+		cam_height = clampf(float(config.get_value("camera", "height", 13.5)), 9.0, 23.0)
+		cam_fov = clampf(float(config.get_value("camera", "fov", 52.0)), 38.0, 72.0)
+	cam.fov = cam_fov
+
+
+func _save_camera_settings() -> void:
+	var config := ConfigFile.new()
+	config.set_value("camera", "mode", cam_mode)
+	config.set_value("camera", "height", cam_height)
+	config.set_value("camera", "fov", cam_fov)
+	var err := config.save("user://camera.cfg")
+	if err != OK:
+		push_warning("No se pudieron guardar los ajustes de cámara: %s" % error_string(err))
+
+
+func _reset_camera_settings() -> void:
+	cam_mode = 0
+	cam_height = 13.5
+	cam_fov = 52.0
+	cam_options.select(cam_mode)
+	cam_height_slider.value = cam_height
+	cam_zoom_slider.value = cam_fov
+	cam.fov = cam_fov
+	_save_camera_settings()
 
 
 func _toggle_camera_settings() -> void:
@@ -357,15 +392,18 @@ func _toggle_camera_settings() -> void:
 
 func _on_camera_mode_selected(index: int) -> void:
 	cam_mode = index
+	_save_camera_settings()
 
 
 func _on_camera_height_changed(value: float) -> void:
 	cam_height = value
+	_save_camera_settings()
 
 
 func _on_camera_zoom_changed(value: float) -> void:
 	cam_fov = value
 	cam.fov = cam_fov
+	_save_camera_settings()
 
 
 func _show_overlay(title: String, text: String, btn: String) -> void:
