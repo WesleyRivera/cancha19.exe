@@ -5,7 +5,7 @@ This is a shortlist for evaluation, not a record of assets already imported.
 ## Verified source for PBR materials and general props
 
 - [Poly Haven](https://polyhaven.com/) — public library of PBR materials, HDRIs and 3D models.
-- [Poly Haven license](https://polyhaven.com/license) — Poly Haven states that its assets are CC0, can be used commercially, redistributed, and do not require attribution.
+- [Poly Haven license](https://polyhaven.com/license) — all Poly Haven assets are CC0; the publisher permits commercial use and redistribution without required attribution.
 - [Poly Haven models](https://polyhaven.com/models)
 - [Poly Haven textures](https://polyhaven.com/textures)
 - [Poly Haven HDRIs](https://polyhaven.com/hdris)
@@ -14,11 +14,20 @@ Useful material categories: concrete, brick, plaster, corrugated metal, rusty me
 
 Poly Haven has strong materials, lighting and general-purpose props. It is not a ready-made Brazilian favela environment.
 
-## Favela architecture candidates (not yet approved)
+## Favela architecture candidate — requires visual inspection
 
-- [Street Scene Rio Favela — Finley Searle](https://sketchfab.com/3d-models/street-scene-rio-favela-9631e0bae22343db82c44fe243af7c15) — candidate previously identified as downloadable and CC BY. Its current download availability, license, textures and quality have not been independently verified in this review.
-- [Favela brasileira 2 — iagoArt3D](https://sketchfab.com/3d-models/favela-brasileira-2-c87942d7d3ba43648920c7f7cd451afc) — candidate previously identified as CC BY. Visual quality and suitability are not verified.
-- [Favela street — Buncic](https://sketchfab.com/3d-models/favela-street-306d29a9905a4c62acad68631975dfde) — previously described as a low-poly set. Not selected.
+- [Street Scene Rio Favela — Finley Searle](https://sketchfab.com/3d-models/street-scene-rio-favela-9631e0bae22343db82c44fe243af7c15)
+  - Sketchfab currently identifies it as downloadable.
+  - 35.9k triangles and 21.8k vertices.
+  - License displayed on the listing: Creative Commons Attribution (CC BY).
+  - Published January 5, 2019.
+  - Author attribution must be retained if this asset is used.
+  - Not yet approved: inspect the downloaded model's visual detail, texture maps, UVs, scale, geometry and Godot import before deciding.
+
+## Other candidates not approved
+
+- [Favela brasileira 2 — iagoArt3D](https://sketchfab.com/3d-models/favela-brasileira-2-c87942d7d3ba43648920c7f7cd451afc) — suitability and current listing details need verification.
+- [Favela street — Buncic](https://sketchfab.com/3d-models/favela-street-306d29a9905a4c62acad68631975dfde) — not selected.
 
 ## Import format and performance
 
@@ -36,9 +45,9 @@ References:
 - [Godot 3D performance optimization](https://docs.godotengine.org/en/latest/tutorials/performance/optimizing_3d_performance.html)
 - [Godot 3D import configuration](https://docs.godotengine.org/en/latest/tutorials/assets_pipeline/importing_3d_scenes/import_configuration.html)
 
-## Acceptance checklist for each asset
+## Acceptance checklist
 
-1. Confirm the exact license on the asset's own page and save author/source information.
+1. Confirm the exact license on the asset's own page and retain author/source information.
 2. Do not use CC BY-NC assets in a project that may later be commercial.
 3. Inspect the downloaded file, textures, scale, normals, UVs, polygon count and import compatibility.
 4. Reject models that look generic at the intended broadcast-camera distance.
@@ -46,4 +55,4 @@ References:
 
 ## Current decision
 
-No third-party model has been imported yet. Architecture is the main visual risk and must be inspected before selecting a final direction. The GitHub file-editing connection can create and update text files, but cannot upload binary model/texture files; those assets must be brought into the Godot project separately.
+No third-party model has been imported yet. The Rio favela scene is the first concrete architecture candidate, but it is not approved until its actual downloaded file is inspected. The GitHub file-editing connection can create and update text files, but cannot upload binary model/texture files; those assets must be added to the local Godot project separately.
