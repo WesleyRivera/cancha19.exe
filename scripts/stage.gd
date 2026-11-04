@@ -444,6 +444,7 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 	m.set_shader_parameter("seed", rng.randf() * 20.0)
 	_box(Vector3(x, h * 0.5, z), Vector3(w, h, d), m)
 	_house_front_details(x, z, w, h, d)
+	_house_roof(x, z, w, h, d)
 	# cosas del techo: tanque de agua y varillas
 	if rng.randf() < 0.5:
 		var t := MeshInstance3D.new()
@@ -468,15 +469,15 @@ func _house(x: float, z: float, w: float, h: float, d: float) -> void:
 
 
 func _build_houses() -> void:
-	# filas del fondo (cerro hacia atrás)
-	for row: int in 6:
-		var z0 := -15.6 - row * 6.2
-		var x := -48.0
-		while x < 48.0:
-			var w := rng.randf_range(5.0, 9.0)
-			var h := rng.randf_range(8.0, 12.0) + row * 5.0 + absf(x) * 0.06
-			_house(x + w * 0.5, z0, w, h, 6.0)
-			x += w - rng.randf_range(0.0, 1.0)
+	# Filas escalonadas: el barrio sube por la ladera y se pierde en el fondo.
+	for row: int in 8:
+		var z0 := -15.8 - row * 5.5
+		var x := -58.0 + (2.2 if row % 2 == 0 else 0.0)
+		while x < 58.0:
+			var w := rng.randf_range(5.2, 8.6)
+			var h := rng.randf_range(7.5, 11.5) + row * 3.7 + absf(x) * 0.045
+			_house(x + w * 0.5, z0, w, h, rng.randf_range(5.4, 7.0))
+			x += w - rng.randf_range(0.15, 0.75)
 	# columnas a los lados
 	for s: int in [-1, 1]:
 		for col: int in 2:
@@ -688,3 +689,25 @@ func _house_front_details(x: float, z: float, w: float, h: float, d: float) -> v
 	if rng.randf() < 0.38:
 		var awning_x := x + rng.randf_range(-w * 0.2, w * 0.2)
 		_box(Vector3(awning_x, 2.65, front + 0.55), Vector3(rng.randf_range(1.5, 2.6), 0.12, 1.0), accent)
+
+
+# Techos de losa y lámina, con parapetos y bordes irregulares.
+func _house_roof(x: float, z: float, w: float, h: float, d: float) -> void:
+	var slab := _std(Color("#77716b"), 0.96)
+	var sheet := _std(Color("#555b60"), 0.78, 0.28)
+	var edge := _std(Color("#393b3c"), 0.9)
+	var roof_y := h + 0.12
+	_box(Vector3(x, roof_y, z), Vector3(w + 0.28, 0.24, d + 0.28), slab)
+	# Tramos de lámina acanalada sobre una parte del techo.
+	if rng.randf() < 0.72:
+		var aw := w * rng.randf_range(0.42, 0.78)
+		var ad := d * rng.randf_range(0.35, 0.62)
+		var ax := x + rng.randf_range(-w * 0.12, w * 0.12)
+		var az := z + rng.randf_range(-d * 0.12, d * 0.12)
+		_box(Vector3(ax, roof_y + 0.22, az), Vector3(aw, 0.10, ad), sheet)
+		for rib: int in int(aw / 0.32):
+			_box(Vector3(ax - aw * 0.5 + rib * 0.32, roof_y + 0.29, az), Vector3(0.035, 0.08, ad), edge)
+	if rng.randf() < 0.6:
+		_box(Vector3(x, roof_y + 0.42, z - d * 0.5), Vector3(w * 0.82, 0.62, 0.14), slab)
+	if rng.randf() < 0.45:
+		_box(Vector3(x + w * 0.5, roof_y + 0.3, z), Vector3(0.14, 0.42, d * 0.72), slab)
