@@ -221,6 +221,7 @@ func build() -> void:
 	_build_street_props()
 	_build_rooftop_details()
 	_build_rooftop_antennas()
+	_build_neighborhood_laundry()
 
 
 # ---------- utilidades ----------
@@ -355,20 +356,55 @@ func _build_walls() -> void:
 		side.position = Vector3(s * 22.05, 4.6, 0)
 		side.rotation_degrees = Vector3(0, 90, 0)
 		add_child(side)
-	# postes de la reja
+	# Estructura de la malla: postes y travesaños visibles en los cuatro lados.
 	var pole_m := _std(Color("#4a4f55"), 0.6, 0.5)
-	var x := -20.0
-	while x <= 20.1:
-		var p := MeshInstance3D.new()
-		var cm := CylinderMesh.new()
-		cm.top_radius = 0.05
-		cm.bottom_radius = 0.05
-		cm.height = 4.4
-		p.mesh = cm
-		p.material_override = pole_m
-		p.position = Vector3(x, 2.2 + 0.4, 12.4)
-		add_child(p)
-		x += 5.0
+	for x: float in range(-22, 23, 4):
+		for z_side: int in [-1, 1]:
+			var p := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.055
+			cm.bottom_radius = 0.07
+			cm.height = 4.6
+			p.mesh = cm
+			p.material_override = pole_m
+			p.position = Vector3(x, 2.45, z_side * 12.4)
+			add_child(p)
+	for side: int in [-1, 1]:
+		for z: float in range(-12, 13, 4):
+			var p := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.055
+			cm.bottom_radius = 0.07
+			cm.height = 4.6
+			p.mesh = cm
+			p.material_override = pole_m
+			p.position = Vector3(side * 22.0, 2.45, z)
+			add_child(p)
+	# Tubos horizontales que tensan y rematan la malla.
+	for z_side: int in [-1, 1]:
+		for y: float in [0.55, 4.65]:
+			var rail := MeshInstance3D.new()
+			var rail_mesh := CylinderMesh.new()
+			rail_mesh.top_radius = 0.045
+			rail_mesh.bottom_radius = 0.045
+			rail_mesh.height = 45.0
+			rail.mesh = rail_mesh
+			rail.material_override = pole_m
+			rail.position = Vector3(0.0, y, z_side * 12.4)
+			trail.rotation_degrees.z = 90.0
+			add_child(rail)
+	for side: int in [-1, 1]:
+		for y: float in [0.55, 4.65]:
+			var rail := MeshInstance3D.new()
+			var rail_mesh := CylinderMesh.new()
+			rail_mesh.top_radius = 0.045
+			rail_mesh.bottom_radius = 0.045
+			rail_mesh.height = 25.0
+			rail.mesh = rail_mesh
+			rail.material_override = pole_m
+			rail.position = Vector3(side * 22.0, y, 0.0)
+			trail.rotation_degrees.x = 90.0
+			add_child(rail)
 	# letreros en la pared del fondo
 	_sign("CANCHA 19", Vector3(0, 1.75, -11.97), 190, Color("#ffd23a"))
 	_sign("FAVELA FC", Vector3(-12.5, 1.5, -11.97), 110, Color("#ffffff"))
@@ -940,3 +976,27 @@ func _build_rooftop_antennas() -> void:
 		tube.material_override = metal
 		tube.position = Vector3(x, h * 0.5 + 1.0, z)
 		add_child(tube)
+
+
+# Ropa tendida entre viviendas: pequeñas siluetas que ayudan a dar escala humana al barrio.
+func _build_neighborhood_laundry() -> void:
+	var cloth_colors := [Color("#e6dfd0"), Color("#b84d42"), Color("#d2a84b"), Color("#426c8a"), Color("#6c8b65"), Color("#a66a8b")]
+	var cord_mat := _std(Color("#25282b"), 0.8, 0.2)
+	for line_idx: int in 18:
+		var x0 := rng.randf_range(-52.0, 42.0)
+		var span := rng.randf_range(2.8, 5.5)
+		var y := rng.randf_range(7.0, 25.0)
+		var z := rng.randf_range(-55.0, -19.0)
+		_cable(Vector3(x0, y, z), Vector3(x0 + span, y - rng.randf_range(0.1, 0.55), z - 0.5), cord_mat)
+		var pieces := rng.randi_range(3, 6)
+		for piece: int in pieces:
+			var cloth := MeshInstance3D.new()
+			var mesh := QuadMesh.new()
+			mesh.size = Vector2(rng.randf_range(0.35, 0.62), rng.randf_range(0.45, 0.9))
+			cloth.mesh = mesh
+			var mat := _std(cloth_colors[rng.randi() % cloth_colors.size()], 0.92)
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			cloth.material_override = mat
+			cloth.position = Vector3(x0 + 0.25 + float(piece) * span / float(pieces), y - mesh.size.y * 0.5, z - 0.54)
+			cloth.rotation_degrees.y = rng.randf_range(-8.0, 8.0)
+			add_child(cloth)
