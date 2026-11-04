@@ -489,7 +489,7 @@ func _build_goals() -> void:
 
 # ---------- casas ----------
 func _house(x: float, z: float, w: float, h: float, d: float) -> void:
-	var pal := [Color("#c24a8a"), Color("#e8c23a"), Color("#d8452f"), Color("#2fa39a"), Color("#e8e2d6"), Color("#7a52c8"), Color("#4aa0e0"), Color("#e88a3a")]
+	var pal := [Color("#a96f68"), Color("#c5a66e"), Color("#a94f3d"), Color("#628b83"), Color("#c5b9a2"), Color("#77718c"), Color("#64869a"), Color("#bd8052"), Color("#887d69"), Color("#b8a18e")]
 	var m := ShaderMaterial.new()
 	m.shader = _house_shader
 	m.set_shader_parameter("base", pal[rng.randi() % pal.size()])
@@ -850,6 +850,25 @@ func _house_roof(x: float, z: float, w: float, h: float, d: float) -> void:
 		_box(Vector3(x, roof_y + 0.42, z - d * 0.5), Vector3(w * 0.82, 0.62, 0.14), slab)
 	if rng.randf() < 0.45:
 		_box(Vector3(x + w * 0.5, roof_y + 0.3, z), Vector3(0.14, 0.42, d * 0.72), slab)
+	# Antenas, varillas y pequenos remiendos visibles en las azoteas.
+	if rng.randf() < 0.72:
+		var mast_x := x + rng.randf_range(-w * 0.34, w * 0.34)
+		var mast_z := z + rng.randf_range(-d * 0.32, d * 0.32)
+		var mast := MeshInstance3D.new()
+		var mast_mesh := CylinderMesh.new()
+		mast_mesh.top_radius = 0.018
+		mast_mesh.bottom_radius = 0.028
+		mast_mesh.height = rng.randf_range(1.4, 2.8)
+		mast.mesh = mast_mesh
+		mast.material_override = edge
+		mast.position = Vector3(mast_x, roof_y + mast_mesh.height * 0.5 + 0.12, mast_z)
+		add_child(mast)
+		for arm_idx in 3:
+			var aerial := _box(Vector3(mast_x, roof_y + 0.45 + arm_idx * 0.28, mast_z), Vector3(0.85 - arm_idx * 0.16, 0.025, 0.025), edge)
+	if rng.randf() < 0.42:
+		var patch_x := x + rng.randf_range(-w * 0.35, w * 0.35)
+		var patch_z := z + rng.randf_range(-d * 0.3, d * 0.3)
+		_box(Vector3(patch_x, roof_y + 0.15, patch_z), Vector3(rng.randf_range(0.8, 1.8), 0.045, rng.randf_range(0.6, 1.2)), _std(Color("#927b65"), 0.98))
 
 
 # Gradas improvisadas y público de barrio detrás de la malla.
